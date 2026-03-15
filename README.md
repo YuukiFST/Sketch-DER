@@ -26,10 +26,3 @@ A forma mais fácil de usar é através do link oficial, assim você não precis
 
 - **Acesse agora:** [https://yuukifst.github.io/Sketch-DER/](https://yuukifst.github.io/Sketch-DER/)
 
-Se preferir rodar localmente no seu computador, você precisará de um servidor local simples (por causa dos módulos ES6):
-
-- **Se usa VS Code:** Instale a extensão "Live Server" e clique em "Go Live".
-- **Se tem Python:** Rode `python -m http.server` na pasta.
-- **Se tem Node:** Rode `npx serve` na pasta.
-
-Depois é só abrir o endereço que aparecer (geralmente `http://localhost:8000` ou `5500`).
