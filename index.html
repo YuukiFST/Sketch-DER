@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>DER Conceitual — Gerador</title>
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <div class="tip" id="tip">
+      <div class="tn" id="tn"></div>
+      <div class="tt" id="tt"></div>
+      <div class="tp" id="tp"></div>
+    </div>
+
+    <div class="topbar">
+      <div class="logo">
+        <div class="dot"></div>
+        DER Conceitual
+      </div>
+      <div class="sep"></div>
+      <div class="tabs">
+        <button
+          type="button"
+          class="tbtn active"
+          onclick="switchTab('editor', this)"
+        >
+          ✏️ Editor
+        </button>
+        <button type="button" class="tbtn" onclick="switchTab('exemplo', this)">
+          📋 Exemplo
+        </button>
+        <button type="button" class="tbtn" onclick="switchTab('sintaxe', this)">
+          📖 Sintaxe
+        </button>
+        <button type="button" class="tbtn" onclick="switchTab('atalhos', this)">
+          ⌨️ Atalhos
+        </button>
+      </div>
+      <div class="tr">
+        <button
+          type="button"
+          class="btn bgh"
+          onclick="triggerProjectImport()"
+          title="Abrir projeto salvo (.json)"
+          style="color: var(--amber); border-color: rgba(247, 192, 79, 0.3)"
+        >
+          📂 Abrir Projeto
+        </button>
+        <button
+          type="button"
+          class="btn bgh"
+          onclick="saveProject()"
+          title="Salvar projeto atual para continuar depois"
+          style="color: var(--green); border-color: rgba(61, 214, 140, 0.3)"
+        >
+          💾 Salvar Projeto
+        </button>
+        <div class="sep" style="margin: 0 4px"></div>
+        <button type="button" class="btn bgh" onclick="exportSVG()">
+          ⬇ SVG
+        </button>
+        <button type="button" class="btn bgh" onclick="exportPNG()">
+          ⬇ PNG
+        </button>
+      </div>
+    </div>
+
+    <div class="main">
+      <div class="lp">
+        <!-- EDITOR -->
+        <div class="tc active" id="tab-editor">
+          <div class="ph"><span class="pt">Script do DER</span></div>
+          <div class="ea">
+            <textarea
+              id="inp"
+              placeholder="Cole aqui o script do DER...&#10;&#10;Veja a aba Exemplo para aprender a sintaxe."
+            ></textarea>
+          </div>
+          <div class="errbox" id="errbox"></div>
+          <div class="ef">
+            <button type="button" class="bgen" onclick="generate()">
+              ▶ Gerar DER
+            </button>
+            <button
+              type="button"
+              class="bclr"
+              onclick="triggerImport()"
+              title="Importar de arquivo (.txt, .md)"
+            >
+              📂 Importar
+            </button>
+            <input
+              type="file"
+              id="file-input"
+              accept=".txt,.md"
+              style="display: none"
+              onchange="importScript(event)"
+            />
+            <button type="button" class="bclr" onclick="clearAll()">
+              Limpar
+            </button>
+          </div>
+        </div>
+
+        <!-- EXEMPLO -->
+        <div class="tc" id="tab-exemplo">
+          <div class="scr">
+            <div class="esec">
+              <div class="etit">Exemplo — RH</div>
+              <p class="edesc">
+                Sistema com <strong>funcionário e departamento</strong>.
+              </p>
+              <pre class="ec" id="ex-rh">
+# DER: Sistema de RH
+
+ENTIDADE funcionario
+  id_funcionario   serial       PK
+  nome             varchar(100)
+  cpf              char(14)
+  salario          numeric(7,2)
+  data_admissao    date
+  email            varchar(100)
+FIM
+
+ENTIDADE departamento
+  id_departamento  serial       PK
+  nome             varchar(50)
+  sigla            varchar(5)
+  gestor           varchar(50)
+FIM
+
+RELACIONAMENTO trabalha
+  DE funcionario    (1,1)
+  PARA departamento (0,n)
+FIM</pre
+              >
+              <button type="button" class="uebtn" onclick="useEx('rh')">
+                ↗ Usar este exemplo
+              </button>
+            </div>
+            <div class="esec">
+              <div class="etit">Exemplo — Pedidos</div>
+              <p class="edesc">
+                Sistema com <strong>3 entidades e 2 relacionamentos</strong>.
+              </p>
+              <pre class="ec" id="ex-pedidos">
+# DER: Sistema de Pedidos
+
+ENTIDADE cliente
+  id_cliente   serial       PK
+  nome         varchar(100)
+  email        varchar(100)
+  telefone     varchar(20)
+FIM
+
+ENTIDADE pedido
+  id_pedido    serial       PK
+  data         date
+  status       varchar(20)
+  total        numeric(10,2)
+FIM
+
+ENTIDADE produto
+  id_produto   serial       PK
+  nome         varchar(100)
+  preco        numeric(8,2)
+  estoque      integer
+FIM
+
+RELACIONAMENTO realiza
+  DE cliente   (1,1)
+  PARA pedido  (0,n)
+FIM
+
+RELACIONAMENTO contem
+  DE pedido    (1,1)
+  PARA produto (1,n)
+FIM</pre
+              >
+              <button type="button" class="uebtn" onclick="useEx('pedidos')">
+                ↗ Usar este exemplo
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- SINTAXE -->
+        <div class="tc" id="tab-sintaxe">
+          <div class="scr">
+            <div class="esec">
+              <div class="etit">Palavras-chave</div>
+              <table class="stbl">
+                <tr>
+                  <td>ENTIDADE nome</td>
+                  <td>Declara uma entidade</td>
+                </tr>
+                <tr>
+                  <td>FIM</td>
+                  <td>Encerra o bloco</td>
+                </tr>
+                <tr>
+                  <td>RELACIONAMENTO nome</td>
+                  <td>Declara um relacionamento</td>
+                </tr>
+                <tr>
+                  <td>DE ent (x,x)</td>
+                  <td>Entidade origem + cardinalidade</td>
+                </tr>
+                <tr>
+                  <td>PARA ent (x,x)</td>
+                  <td>Entidade destino + cardinalidade</td>
+                </tr>
+                <tr>
+                  <td># comentário</td>
+                  <td>Linha ignorada</td>
+                </tr>
+              </table>
+            </div>
+            <div class="esec">
+              <div class="etit">Atributos</div>
+              <pre class="ec">
+ENTIDADE nome
+  nome_campo   tipo   [PK]
+FIM</pre
+              >
+              <table class="stbl" style="margin-top: 10px">
+                <tr>
+                  <td>PK</td>
+                  <td>
+                    Chave primária — bolinha azul preenchida, nome sublinhado
+                  </td>
+                </tr>
+                <tr>
+                  <td>serial</td>
+                  <td>Auto-incremento</td>
+                </tr>
+                <tr>
+                  <td>varchar(N)</td>
+                  <td>Texto variável</td>
+                </tr>
+                <tr>
+                  <td>integer / int</td>
+                  <td>Inteiro</td>
+                </tr>
+                <tr>
+                  <td>boolean</td>
+                  <td>Verdadeiro/Falso</td>
+                </tr>
+                <tr>
+                  <td>timestamp</td>
+                  <td>Data e hora</td>
+                </tr>
+                <tr>
+                  <td>text</td>
+                  <td>Texto longo</td>
+                </tr>
+                <tr>
+                  <td>decimal(X,Y)</td>
+                  <td>Número decimal</td>
+                </tr>
+              </table>
+            </div>
+            <div class="esec">
+              <div class="etit">Cardinalidades</div>
+              <table class="stbl">
+                <tr>
+                  <td>(1,1)</td>
+                  <td>Exatamente um</td>
+                </tr>
+                <tr>
+                  <td>(0,1)</td>
+                  <td>Zero ou um</td>
+                </tr>
+                <tr>
+                  <td>(0,n)</td>
+                  <td>Zero ou muitos</td>
+                </tr>
+                <tr>
+                  <td>(1,n)</td>
+                  <td>Um ou muitos</td>
+                </tr>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ATALHOS -->
+        <div class="tc" id="tab-atalhos">
+          <div class="scr">
+            <div class="esec">
+              <div class="etit">Comandos do Mouse</div>
+              <p class="edesc">
+                • <strong>Mover Tela (Pan)</strong> — segure o
+                <kbd>Botão Direito</kbd> no fundo do canvas e arraste.<br />
+                • <strong>Seleção Múltipla (Lasso)</strong> — segure o
+                <kbd>Botão Esquerdo</kbd> no fundo para selecionar vários
+                itens.<br />
+                • <strong>Mover em Bloco</strong> — após selecionar, arraste
+                qualquer item do grupo.<br />
+                • <strong>Mover Cardinalidade</strong> — arraste individualmente
+                os rótulos de <i>(1,n)</i>.<br />
+                • <strong>Zoom</strong> — use o scroll do mouse ou os botões no
+                topo do canvas.
+              </p>
+            </div>
+            <div class="esec">
+              <div class="etit">Teclas de Atalho</div>
+              <p class="edesc">
+                • <kbd>Ctrl</kbd> + <kbd>Z</kbd> —
+                <strong>Desfazer:</strong> reverte a última alteração.<br />
+                • <kbd>Ctrl</kbd> + <kbd>Y</kbd> —
+                <strong>Refazer:</strong> avança uma alteração desfeita.<br />
+                • <kbd>O</kbd> — <strong>Organizar:</strong> selecione uma
+                entidade e aperte <strong>O</strong> para enfileirar
+                atributos.<br />
+                • <kbd>R</kbd> — <strong>Inverter Lado:</strong> selecione a
+                entidade e aperte <strong>R</strong> para espelhar a lista de
+                atributos.<br />
+                • <kbd>Ctrl</kbd> + <kbd>Enter</kbd> —
+                <strong>Gerar DER:</strong> atualiza o diagrama com o código
+                atual.<br />
+                • <kbd>Clique</kbd> — <strong>Editar:</strong> abre o painel de
+                propriedades do item.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CANVAS RIGHT -->
+      <div class="rp">
+        <div class="ctb">
+          <button type="button" class="zb" onclick="doZoom(-0.15)">−</button>
+          <span class="zl" id="zl">100%</span>
+          <button type="button" class="zb" onclick="doZoom(0.15)">+</button>
+          <button type="button" class="zb" onclick="resetZoom()" title="Reset">
+            ⊙
+          </button>
+          <button
+            type="button"
+            class="zb"
+            id="btn-fullscreen"
+            onclick="toggleFullscreen()"
+            title="Maximizar Tela"
+            style="font-size: 18px"
+          >
+            ⛶
+          </button>
+          <span class="ci" id="ci">Nenhum diagrama</span>
+        </div>
+        <div id="viewport">
+          <div class="empty" id="empty">
+            <div class="eic">◇</div>
+            <div class="etxt">
+              <strong>Nenhum diagrama</strong>Cole o script e clique em "Gerar
+              DER"
+            </div>
+          </div>
+          <svg
+            id="der-svg"
+            xmlns="http://www.w3.org/2000/svg"
+            width="4000"
+            height="3000"
+          >
+            <defs>
+              <pattern
+                id="grid"
+                width="30"
+                height="30"
+                patternUnits="userSpaceOnUse"
+              >
+                <path
+                  d="M 30 0 L 0 0 0 30"
+                  fill="none"
+                  stroke="#1e2538"
+                  stroke-width="0.5"
+                />
+              </pattern>
+            </defs>
+            <rect width="4000" height="3000" fill="#f2f2f2" />
+            <!-- dynamic content goes here -->
+            <g id="layer-grid">
+              <rect width="4000" height="3000" fill="url(#grid)" opacity="0" />
+            </g>
+            <g id="layer-lines"></g>
+            <g id="layer-attrs"></g>
+            <g id="layer-shapes"></g>
+            <g id="layer-labels"></g>
+          </svg>
+        </div>
+
+        <!-- RIGHT PANEL FOR EDITING (Moved inside .rp for Fullscreen support) -->
+        <div class="side-panel" id="prop-panel">
+          <div class="sp-head">
+            <div class="sp-tit">
+              <div class="sp-tit-icon" id="pp-icon">E</div>
+              <span id="pp-title">Propriedades</span>
+            </div>
+            <button type="button" class="sp-close" onclick="closePanel()">
+              ×
+            </button>
+          </div>
+          <div class="sp-body" id="pp-body">
+            <!-- Injected by JS -->
+          </div>
+          <div class="sp-foot">
+            <button type="button" class="btn-save" onclick="applyEdits()">
+              Salvar Alterações
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+
+    <!-- HIDDEN OPEN PROJECT INPUT -->
+    <input
+      type="file"
+      id="proj-input"
+      accept=".json"
+      style="display: none"
+      onchange="loadProject(event)"
+    />
+
+    <div class="sb">
+      <div class="si">
+        <div class="sd idl" id="sd"></div>
+        <span id="st">Pronto</span>
+      </div>
+      <div class="si" id="sc"></div>
+      <div class="si" style="margin-left: auto; color: var(--text3)">
+        Consulte a aba 'Atalhos' para dicas de uso
+      </div>
+    </div>
+
+    <script type="module" src="js/main.js"></script>
+  </body>
+</html>
