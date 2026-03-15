@@ -22,9 +22,9 @@ Depois que a lógica estiver batida e você tiver certeza do que precisa, aí si
 
 ## Como rodar
 
-A forma mais fácil de usar é através do **GitHub Pages**, assim você não precisa baixar nada:
+A forma mais fácil de usar é através do link oficial, assim você não precisa baixar nada:
 
-- Acesse: `https://seu-usuario.github.io/Sketch-DER` (após você ativar nas configurações do repositório).
+- **Acesse agora:** [https://yuukifst.github.io/Sketch-DER/](https://yuukifst.github.io/Sketch-DER/)
 
 Se preferir rodar localmente no seu computador, você precisará de um servidor local simples (por causa dos módulos ES6):
 
