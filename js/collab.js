@@ -8,7 +8,7 @@
 const COLLAB = (() => {
 
   // ⚠️ Substituir pela URL real do servidor Go no Render:
-  const SERVER_URL = 'wss://sketch-der-collab.onrender.com/ws';
+  const SERVER_URL = 'wss://sketch-der.onrender.com/ws';
 
   let ws = null;
   let myInfo = null;        // { id, name, color }
@@ -366,26 +366,102 @@ const COLLAB = (() => {
   }
 
   function showLoadingOverlay(text) {
-    let el = document.getElementById('collab-loading');
-    if (!el) {
-      el = document.createElement('div');
-      el.id = 'collab-loading';
-      el.style.cssText = `
-        position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,0.6);
-        display:flex;align-items:center;justify-content:center;font-family:sans-serif;
-        backdrop-filter: blur(4px);
+    // Remove se já existir
+    const old = document.getElementById('collab-loading');
+    if (old) old.remove();
+
+    const el = document.createElement('div');
+    el.id = 'collab-loading';
+    el.style.cssText = `
+      position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,0.55);
+      display:flex;align-items:center;justify-content:center;font-family:sans-serif;
+    `;
+    el.innerHTML = `
+      <div style="background:#fff;border-radius:14px;padding:36px 44px;
+                  min-width:320px;max-width:380px;text-align:center;">
+        <div id="cl-spinner" style="width:48px;height:48px;border:3px solid #e8e8e8;
+             border-top-color:#3498DB;border-radius:50%;margin:0 auto 24px;
+             animation:collabSpin 0.9s linear infinite;"></div>
+        <p style="font-size:17px;font-weight:600;color:#1a1a1a;margin:0 0 8px;">${text}</p>
+        <div style="height:22px;margin-bottom:16px;">
+          <p id="cl-msg" style="font-size:13px;color:#888;margin:0;
+             animation:collabFadeMsg 3s ease forwards;"></p>
+        </div>
+        <div style="background:#f0f0f0;border-radius:99px;height:4px;
+                    overflow:hidden;margin-bottom:16px;">
+          <div id="cl-bar" style="height:100%;background:#3498DB;border-radius:99px;
+               width:0;transition:width 0.8s ease;"></div>
+        </div>
+        <p style="font-size:11px;color:#bbb;margin:0;line-height:1.5;">
+          O servidor gratuito hiberna quando não está em uso.<br>
+          Isso só acontece na primeira conexão do dia.
+        </p>
+      </div>
+    `;
+    document.body.appendChild(el);
+
+    // Injeta keyframes uma vez
+    if (!document.getElementById('collab-keyframes')) {
+      const style = document.createElement('style');
+      style.id = 'collab-keyframes';
+      style.textContent = `
+        @keyframes collabSpin { to { transform: rotate(360deg); } }
+        @keyframes collabFadeMsg {
+          0%   { opacity:0; transform:translateY(5px); }
+          15%  { opacity:1; transform:translateY(0); }
+          85%  { opacity:1; transform:translateY(0); }
+          100% { opacity:0; transform:translateY(-5px); }
+        }
       `;
-      el.innerHTML = `<div style="background:var(--surface);border:1px solid var(--border);color:var(--text);padding:24px 40px;border-radius:12px;font-size:16px;font-weight:600;box-shadow:0 20px 40px rgba(0,0,0,0.5);"
-        id="collab-loading-text"></div>`;
-      document.body.appendChild(el);
+      document.head.appendChild(style);
     }
-    document.getElementById('collab-loading-text').textContent = text;
-    el.style.display = 'flex';
+
+    // Mensagens rotativas a cada 3s
+    const msgs = [
+      'Acordando o servidor (pode levar até 50s)...',
+      'Estabelecendo conexão WebSocket...',
+      'Aguardando resposta do servidor...',
+      'Quase lá, só mais um momento...',
+      'Ainda tentando conectar...',
+      'O servidor está quase pronto...',
+    ];
+    let msgIndex = 0;
+    const msgEl = document.getElementById('cl-msg');
+    const barEl = document.getElementById('cl-bar');
+
+    function nextMsg() {
+      if (!msgEl) return;
+      msgEl.style.animation = 'none';
+      msgEl.offsetHeight; // força reflow
+      msgEl.textContent = msgs[msgIndex % msgs.length];
+      msgEl.style.animation = 'collabFadeMsg 3s ease forwards';
+      msgIndex++;
+    }
+
+    nextMsg();
+    el._msgTimer = setInterval(nextMsg, 3000);
+
+    // Barra de progresso: avança linearmente em 55s (cobrindo o pior caso)
+    let progress = 0;
+    el._barTimer = setInterval(() => {
+      progress = Math.min(progress + (100 / 55), 98); // nunca chega a 100 — só fecha ao conectar
+      if (barEl) barEl.style.width = progress + '%';
+    }, 1000);
   }
 
   function hideLoadingOverlay() {
     const el = document.getElementById('collab-loading');
-    if (el) el.style.display = 'none';
+    if (!el) return;
+
+    // Para os timers
+    clearInterval(el._msgTimer);
+    clearInterval(el._barTimer);
+
+    // Barra vai a 100% e some com fade
+    const barEl = document.getElementById('cl-bar');
+    if (barEl) barEl.style.width = '100%';
+
+    setTimeout(() => el.remove(), 400);
   }
 
   // API pública
