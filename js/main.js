@@ -11,6 +11,19 @@ function init() {
   initViewportEvents();
   setStatus('idl', 'Pronto');
   setupKeyboardShortcuts();
+
+  // RENDER LOOP setup (Performance Layer)
+  if (window.RENDER_LOOP) {
+    RENDER_LOOP.setRenderCallback(() => render());
+    RENDER_LOOP.start();
+  }
+
+  // Sincronização periódica de estado para colaboração
+  setInterval(() => {
+    if (window.COLLAB && COLLAB.isInRoom() && window.SKETCH_DER) {
+      COLLAB.emitStateSync(window.SKETCH_DER.getFullState());
+    }
+  }, 10000);
 }
 
 window.addEventListener('load', init);
@@ -42,9 +55,20 @@ window.generate = function() {
       state.nodes = nodes;
       state.edges = edges;
       
+      // Registrar no Render Loop para animações suaves
+      if (window.RENDER_LOOP) {
+        RENDER_LOOP.clear();
+        state.nodes.forEach(n => RENDER_LOOP.register(n.id, n.cx, n.cy, n));
+      }
+
       render();
       fitView();
       setStatus('ok', 'DER gerado!');
+
+      // Emite novo estado para a sala
+      if (window.COLLAB && COLLAB.isInRoom()) {
+        COLLAB.emitDerUpdate(window.SKETCH_DER.getFullState());
+      }
     } catch(e) {
       showError(e.message);
       setStatus('err', 'Erro de sintaxe');
@@ -285,6 +309,78 @@ function setupKeyboardShortcuts() {
     }
   });
 }
+
+// ══════════════════════════════════════════════════════════════════
+// COLLAB BRIDGE (window.SKETCH_DER)
+// ══════════════════════════════════════════════════════════════════
+window.SKETCH_DER = {
+  getFullState() {
+    const nodesData = state.nodes.map(n => {
+        const pos = window.RENDER_LOOP ? (RENDER_LOOP.getPosition(n.id) || { x: n.cx, y: n.cy }) : { x: n.cx, y: n.cy };
+        return { ...n, cx: pos.x, cy: pos.y };
+    });
+    return JSON.stringify({
+      script: document.getElementById('inp').value,
+      nodes: nodesData
+    });
+  },
+
+  loadFullState(fullState) {
+    try {
+      const data = JSON.parse(fullState);
+      if (data.script !== undefined) {
+        document.getElementById('inp').value = data.script;
+      }
+      if (data.nodes) {
+        state.nodes = JSON.parse(JSON.stringify(data.nodes));
+        if (window.RENDER_LOOP) {
+           RENDER_LOOP.clear();
+           state.nodes.forEach(n => RENDER_LOOP.register(n.id, n.cx, n.cy, n));
+        }
+        render();
+      }
+    } catch (e) {
+      console.error('[Collab] Erro ao carregar estado remoto:', e);
+    }
+  },
+
+  setElementLock(id, color, name) {
+    const node = state.nodes.find(n => n.id === id);
+    if (node) {
+      node._lockColor = color;
+      node._lockUser = name;
+      if (window.RENDER_LOOP) RENDER_LOOP.markDirty();
+    }
+  },
+
+  clearElementLock(id) {
+    const node = state.nodes.find(n => n.id === id);
+    if (node) {
+      delete node._lockColor;
+      delete node._lockUser;
+      if (window.RENDER_LOOP) RENDER_LOOP.markDirty();
+    }
+  },
+
+  applyElementMove(elementId, elementType, x, y) {
+    // No "Performance Plan", isso é tratado via RENDER_LOOP.moveRemote direto no collab.js
+    // Mas mantemos aqui para compatibilidade
+    if (window.RENDER_LOOP) {
+        RENDER_LOOP.moveRemote(elementId, x, y);
+    } else {
+        const node = state.nodes.find(n => n.id === elementId);
+        if (node) { node.cx = x; node.cy = y; render(); }
+    }
+  },
+
+  getViewTransform() {
+    return {
+      panX: state.panX,
+      panY: state.panY,
+      scale: state.zoom
+    };
+  }
+};
 
 // Ensure external binds for panel + export
 window.closePanel = closePanel;

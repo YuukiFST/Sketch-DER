@@ -1,3 +1,4 @@
+import { state } from './state.js';
 import { CONSTANTS } from './config.js';
 
 // ══════════════════════════════════════════════════════════════════
@@ -139,7 +140,7 @@ export function buildState(data) {
   const entitiesToOrganize = nodes.filter(n => n.type === 'entity');
   
   entitiesToOrganize.forEach(entNode => {
-    rebuildEntityAttributes(entNode);
+    rebuildEntityAttributes(entNode, nodes, edges);
   });
 
   return { nodes, edges };
@@ -148,16 +149,19 @@ export function buildState(data) {
 // ══════════════════════════════════════════════════════════════════
 // RADIAL ATTRIBUTE REBUILD (O / R KEYS)
 // ══════════════════════════════════════════════════════════════════
-export function rebuildEntityAttributes(entNode) {
-  const attrs = state.nodes.filter(n => n.type === 'attribute' && n.parentId === entNode.id);
+export function rebuildEntityAttributes(entNode, nodesOverride, edgesOverride) {
+  const targetNodes = nodesOverride || state.nodes;
+  const targetEdges = edgesOverride || state.edges;
+  
+  const attrs = targetNodes.filter(n => n.type === 'attribute' && n.parentId === entNode.id);
   if (!attrs.length) return;
   
-  const relEdgesObj = state.edges.filter(e => e.type === 'rel-line' && (e.from === entNode.id || e.to === entNode.id));
+  const relEdgesObj = targetEdges.filter(e => e.type === 'rel-line' && (e.from === entNode.id || e.to === entNode.id));
   let blockedAngles = [];
   
   relEdgesObj.forEach(e => {
     const otherId = e.from === entNode.id ? e.to : e.from;
-    const otherNode = state.nodes.find(n => n.id === otherId);
+    const otherNode = targetNodes.find(n => n.id === otherId);
     if (otherNode) {
       let angle = Math.atan2(otherNode.cy - entNode.cy, otherNode.cx - entNode.cx);
       if (angle < 0) angle += 2 * Math.PI;

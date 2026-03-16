@@ -4,6 +4,9 @@
     <meta charset="UTF-8" />
     <title>DER Conceitual — Gerador</title>
     <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/collab.css" />
+    <script src="js/render-loop.js"></script>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   </head>
   <body>
     <div class="tip" id="tip">
@@ -61,6 +64,18 @@
         </button>
         <button type="button" class="btn bgh" onclick="exportPNG()">
           ⬇ PNG
+        </button>
+        <div class="sep" style="margin: 0 4px"></div>
+        <button
+          type="button"
+          class="btn"
+          style="background: var(--accent); color: white"
+          onclick="
+            document.getElementById('collab-modal').classList.add('open')
+          "
+          title="Colaboração em tempo real"
+        >
+          🤝 Colaborar
         </button>
       </div>
     </div>
@@ -412,8 +427,6 @@ FIM</pre
       </div>
     </div>
 
-
-
     <!-- HIDDEN OPEN PROJECT INPUT -->
     <input
       type="file"
@@ -435,5 +448,124 @@ FIM</pre
     </div>
 
     <script type="module" src="js/main.js"></script>
+
+    <!-- ===== COLABORAÇÃO UI ===== -->
+    <div id="collab-modal">
+      <div id="collab-modal-box">
+        <h2>🤝 Colaboração Realtime</h2>
+
+        <span class="collab-label">Seu Nome</span>
+        <input
+          id="collab-name-input"
+          class="collab-input"
+          type="text"
+          placeholder="Ex: João"
+          maxlength="20"
+        />
+
+        <button
+          class="collab-btn collab-btn-primary"
+          onclick="COLLAB_UI.onCreateRoom()"
+        >
+          ✨ Criar nova sala
+        </button>
+
+        <div class="collab-divider">ou entre em uma já criada</div>
+
+        <input
+          id="collab-code-input"
+          class="collab-input"
+          type="text"
+          placeholder="Código (ex: DER-4F2A)"
+          maxlength="8"
+          style="text-transform: uppercase"
+        />
+        <button
+          class="collab-btn collab-btn-secondary"
+          onclick="COLLAB_UI.onJoinRoom()"
+        >
+          🚪 Entrar na sala
+        </button>
+
+        <button
+          class="collab-btn"
+          onclick="COLLAB_UI.onClose()"
+          style="background: none; color: var(--text3); font-size: 12px"
+        >
+          Cancelar
+        </button>
+      </div>
+    </div>
+
+    <div id="collab-panel">
+      <div id="collab-panel-title">Sala Ativa</div>
+      <div id="collab-room-code-row">
+        <span id="collab-room-code">—</span>
+        <button id="collab-copy-btn" onclick="COLLAB_UI.copyCode()">
+          Copiar
+        </button>
+      </div>
+      <div id="collab-user-list"></div>
+      <button id="collab-leave-btn" onclick="COLLAB_UI.leaveRoom()">
+        Sair da sala
+      </button>
+    </div>
+
+    <script src="js/collab.js"></script>
+    <script>
+      // COLLAB_UI — ponte entre o HTML e o módulo COLLAB
+      const COLLAB_UI = {
+        onCreateRoom() {
+          const name = document
+            .getElementById("collab-name-input")
+            .value.trim();
+          if (!name) {
+            alert("Digite seu nome primeiro.");
+            return;
+          }
+          const fullState = window.SKETCH_DER
+            ? window.SKETCH_DER.getFullState()
+            : "";
+          COLLAB.createRoom(name, fullState);
+        },
+        onJoinRoom() {
+          const name = document
+            .getElementById("collab-name-input")
+            .value.trim();
+          const code = document
+            .getElementById("collab-code-input")
+            .value.trim()
+            .toUpperCase();
+          if (!name) {
+            alert("Digite seu nome primeiro.");
+            return;
+          }
+          if (!code || code.length < 4) {
+            alert("Digite o código da sala.");
+            return;
+          }
+          COLLAB.joinRoom(name, code);
+        },
+        onClose() {
+          document.getElementById("collab-modal").classList.remove("open");
+        },
+        copyCode() {
+          const code = document.getElementById("collab-room-code").textContent;
+          navigator.clipboard.writeText(code).then(() => {
+            const btn = document.getElementById("collab-copy-btn");
+            btn.textContent = "Copiado!";
+            setTimeout(() => (btn.textContent = "Copiar"), 1500);
+          });
+        },
+        leaveRoom() {
+          location.reload();
+        },
+      };
+
+      // Inicializa assim que carregar
+      document.addEventListener("DOMContentLoaded", () => {
+        // Inicialização do Render Loop e Collab ocorre no main.js
+      });
+    </script>
   </body>
 </html>

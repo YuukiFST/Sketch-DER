@@ -30,12 +30,16 @@ export function render() {
     const from = nodes.find(n => n.id === e.from);
     const to   = nodes.find(n => n.id === e.to);
     if (!from || !to) return;
+
+    const fp = window.RENDER_LOOP ? (RENDER_LOOP.getPosition(from.id) || { x: from.cx, y: from.cy }) : { x: from.cx, y: from.cy };
+    const tp = window.RENDER_LOOP ? (RENDER_LOOP.getPosition(to.id) || { x: to.cx, y: to.cy }) : { x: to.cx, y: to.cy };
+
     const ep = (() => {
-      const dx = from.cx - to.cx, dy = from.cy - to.cy;
+      const dx = fp.x - tp.x, dy = fp.y - tp.y;
       const d = Math.sqrt(dx*dx+dy*dy)||1;
-      return { x: to.cx + (dx/d)*6, y: to.cy + (dy/d)*6 };
+      return { x: tp.x + (dx/d)*6, y: tp.y + (dy/d)*6 };
     })();
-    const line = svgEl('line', { x1: from.cx, y1: from.cy, x2: ep.x, y2: ep.y, stroke:'#707888', 'stroke-width':'0.9', opacity:'0.6' });
+    const line = svgEl('line', { x1: fp.x, y1: fp.y, x2: ep.x, y2: ep.y, stroke:'#707888', 'stroke-width':'0.9', opacity:'0.6' });
     ll.appendChild(line);
   });
 
@@ -45,21 +49,24 @@ export function render() {
     const to   = nodes.find(n => n.id === e.to);
     if (!from || !to) return;
 
+    const fp = window.RENDER_LOOP ? (RENDER_LOOP.getPosition(from.id) || { x: from.cx, y: from.cy }) : { x: from.cx, y: from.cy };
+    const tp = window.RENDER_LOOP ? (RENDER_LOOP.getPosition(to.id) || { x: to.cx, y: to.cy }) : { x: to.cx, y: to.cy };
+
     // Compute edge points
     let p1, p2;
     if (from.type === 'entity') {
-      p1 = edgeRect(from.cx, from.cy, from.w+2, from.h+2, to.cx, to.cy);
+      p1 = edgeRect(fp.x, fp.y, from.w+2, from.h+2, tp.x, tp.y);
     } else if (from.type === 'relationship') {
-      p1 = edgeDiamond(from.cx, from.cy, from.hw, from.hh, to.cx, to.cy);
+      p1 = edgeDiamond(fp.x, fp.y, from.hw, from.hh, tp.x, tp.y);
     } else {
-      p1 = { x: from.cx, y: from.cy };
+      p1 = { x: fp.x, y: fp.y };
     }
     if (to.type === 'entity') {
-      p2 = edgeRect(to.cx, to.cy, to.w+2, to.h+2, from.cx, from.cy);
+      p2 = edgeRect(tp.x, tp.y, to.w+2, to.h+2, fp.x, fp.y);
     } else if (to.type === 'relationship') {
-      p2 = edgeDiamond(to.cx, to.cy, to.hw, to.hh, from.cx, from.cy);
+      p2 = edgeDiamond(tp.x, tp.y, to.hw, to.hh, fp.x, fp.y);
     } else {
-      p2 = { x: to.cx, y: to.cy };
+      p2 = { x: tp.x, y: tp.y };
     }
 
     const line = svgEl('line', { x1: p1.x.toFixed(1), y1: p1.y.toFixed(1), x2: p2.x.toFixed(1), y2: p2.y.toFixed(1), stroke:'#111827', 'stroke-width':'1.1', opacity:'0.75' });
@@ -88,23 +95,24 @@ export function render() {
 
   // ── ATTRIBUTE DOTS + LABELS ──
   nodes.filter(n => n.type === 'attribute').forEach(n => {
+    const pos = window.RENDER_LOOP ? (RENDER_LOOP.getPosition(n.id) || { x: n.cx, y: n.cy }) : { x: n.cx, y: n.cy };
     const g = svgEl('g', { class:'attr-group', 'data-id': n.id });
 
     // Hit area (transparent, wider)
-    g.appendChild(svgEl('circle', { cx: n.cx.toFixed(1), cy: n.cy.toFixed(1), r:'12', fill:'transparent' }));
+    g.appendChild(svgEl('circle', { cx: pos.x.toFixed(1), cy: pos.y.toFixed(1), r:'12', fill:'transparent' }));
 
     // Dot
     const dotR = n.pk ? 6 : 5;
     const dotFill = n.pk ? '#1a3fa8' : '#ffffff';
     const dot = svgEl('circle', {
       class:'dot',
-      cx: n.cx.toFixed(1), cy: n.cy.toFixed(1), r: dotR,
+      cx: pos.x.toFixed(1), cy: pos.y.toFixed(1), r: dotR,
       fill: dotFill, stroke:'#111827', 'stroke-width':'1.2'
     });
     g.appendChild(dot);
 
     // Label
-    let lx = (n.cx + dotR + 5).toFixed(1);
+    let lx = (pos.x + dotR + 5).toFixed(1);
     let anchor = 'start';
     
     // Se o atributo foi organizado pela Fase 3 (radiais), orienta inteligentemente o texto base na órbita.
@@ -115,13 +123,13 @@ export function render() {
       if (a < 0) a += 2 * PI;
       if (a > PI/2 + 0.1 && a < 3*PI/2 - 0.1) {
         anchor = 'end';
-        lx = (n.cx - dotR - 5).toFixed(1);
+        lx = (pos.x - dotR - 5).toFixed(1);
       }
     }
 
     const labelStyle = n.pk ? 'user-select:none;font-weight:bold;text-decoration:underline' : 'user-select:none';
     const txt = svgEl('text', {
-      x: lx, y: n.cy.toFixed(1),
+      x: lx, y: pos.y.toFixed(1),
       'font-family': CONSTANTS.FONT, 'font-size':'11.5',
       fill:'#111827', 'dominant-baseline':'middle', 'text-anchor': anchor,
       style: labelStyle
@@ -139,14 +147,32 @@ export function render() {
 
   // ── ENTITY RECTS ──
   nodes.filter(n => n.type === 'entity').forEach(n => {
+    const pos = window.RENDER_LOOP ? (RENDER_LOOP.getPosition(n.id) || { x: n.cx, y: n.cy }) : { x: n.cx, y: n.cy };
     const g = svgEl('g', { class:'ent-group', 'data-id': n.id });
+
+    // Lock Indicator
+    if (n._lockColor) {
+      g.appendChild(svgEl('rect', {
+        x: (pos.x - n.w/2 - 4).toFixed(1), y: (pos.y - n.h/2 - 4).toFixed(1),
+        width: n.w + 8, height: n.h + 8,
+        fill:'none', stroke: n._lockColor, 'stroke-width':'2', 'stroke-dasharray':'4,3',
+        rx: '4'
+      }));
+      const l = svgEl('text', {
+        x: (pos.x - n.w/2).toFixed(1), y: (pos.y - n.h/2 - 8).toFixed(1),
+        'font-family': CONSTANTS.FONT, 'font-size':'10', fill: n._lockColor, 'font-weight':'bold'
+      });
+      l.textContent = n._lockUser || '';
+      g.appendChild(l);
+    }
+
     g.appendChild(svgEl('rect', {
-      x: (n.cx - n.w/2).toFixed(1), y: (n.cy - n.h/2).toFixed(1),
+      x: (pos.x - n.w/2).toFixed(1), y: (pos.y - n.h/2).toFixed(1),
       width: n.w, height: n.h,
       fill:'#ffffff', stroke:'#111827', 'stroke-width':'1.5'
     }));
     const t = svgEl('text', {
-      x: n.cx.toFixed(1), y: n.cy.toFixed(1),
+      x: pos.x.toFixed(1), y: pos.y.toFixed(1),
       'font-family': CONSTANTS.FONT, 'font-size':'13', 'font-weight':'bold',
       fill:'#111827', 'text-anchor':'middle', 'dominant-baseline':'middle',
       style:'user-select:none; pointer-events:none'
@@ -158,11 +184,25 @@ export function render() {
 
   // ── RELATIONSHIP DIAMONDS ──
   nodes.filter(n => n.type === 'relationship').forEach(n => {
+    const pos = window.RENDER_LOOP ? (RENDER_LOOP.getPosition(n.id) || { x: n.cx, y: n.cy }) : { x: n.cx, y: n.cy };
     const g = svgEl('g', { class:'rel-group', 'data-id': n.id });
-    const pts = `${n.cx},${(n.cy-n.hh).toFixed(1)} ${(n.cx+n.hw).toFixed(1)},${n.cy} ${n.cx},${(n.cy+n.hh).toFixed(1)} ${(n.cx-n.hw).toFixed(1)},${n.cy}`;
+
+    // Lock Indicator
+    if (n._lockColor) {
+      const ptsL = `${pos.x},${(pos.y-n.hh-5).toFixed(1)} ${(pos.x+n.hw+6).toFixed(1)},${pos.y} ${pos.x},${(pos.y+n.hh+5).toFixed(1)} ${(pos.x-n.hw-6).toFixed(1)},${pos.y}`;
+      g.appendChild(svgEl('polygon', { points:ptsL, fill:'none', stroke: n._lockColor, 'stroke-width':'2', 'stroke-dasharray':'4,3' }));
+      const l = svgEl('text', {
+        x: (pos.x - n.hw).toFixed(1), y: (pos.y - n.hh - 8).toFixed(1),
+        'font-family': CONSTANTS.FONT, 'font-size':'10', fill: n._lockColor, 'font-weight':'bold'
+      });
+      l.textContent = n._lockUser || '';
+      g.appendChild(l);
+    }
+
+    const pts = `${pos.x},${(pos.y-n.hh).toFixed(1)} ${(pos.x+n.hw).toFixed(1)},${pos.y} ${pos.x},${(pos.y+n.hh).toFixed(1)} ${(pos.x-n.hw).toFixed(1)},${pos.y}`;
     g.appendChild(svgEl('polygon', { points:pts, fill:'#ffffff', stroke:'#111827', 'stroke-width':'1.5' }));
     const t = svgEl('text', {
-      x: n.cx.toFixed(1), y: n.cy.toFixed(1),
+      x: pos.x.toFixed(1), y: pos.y.toFixed(1),
       'font-family': CONSTANTS.FONT, 'font-size':'12', 'font-style':'italic',
       fill:'#111827', 'text-anchor':'middle', 'dominant-baseline':'middle',
       style:'user-select:none; pointer-events:none'

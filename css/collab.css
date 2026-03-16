@@ -1,0 +1,198 @@
+/* Animação de entrada dos toasts */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Modal de colaboração (criar/entrar em sala) */
+#collab-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  background: rgba(0, 0, 0, 0.5);
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+#collab-modal.open {
+  display: flex !important;
+}
+
+#collab-modal-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 28px 32px;
+  min-width: 360px;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5);
+  font-family: var(--sans);
+  color: var(--text);
+}
+
+#collab-modal-box h2 {
+  margin: 0 0 20px;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--accent2);
+}
+
+.collab-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.collab-input {
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  margin-bottom: 16px;
+  box-sizing: border-box;
+  color: var(--text);
+  outline: none;
+}
+
+.collab-input:focus {
+  border-color: var(--accent);
+}
+
+.collab-btn {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  font-weight: 600;
+  margin-bottom: 10px;
+  transition: all 0.2s;
+}
+
+.collab-btn-primary {
+  background: var(--accent);
+  color: white;
+}
+.collab-btn-secondary {
+  background: var(--surface2);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.collab-btn-danger {
+  background: var(--red);
+  color: white;
+}
+
+.collab-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.collab-divider {
+  text-align: center;
+  color: var(--text3);
+  font-size: 11px;
+  margin: 12px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.collab-divider::before,
+.collab-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* Painel lateral de colaboração (visível enquanto em sala) */
+#collab-panel {
+  display: none;
+  position: absolute;
+  top: 60px;
+  right: 16px;
+  z-index: 8000;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  min-width: 200px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  font-family: var(--sans);
+}
+
+#collab-panel-title {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text3);
+  letter-spacing: 0.1em;
+  margin-bottom: 8px;
+}
+
+#collab-room-code-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+#collab-room-code {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--accent2);
+  font-family: var(--mono);
+}
+
+#collab-copy-btn {
+  font-size: 10px;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  background: var(--surface2);
+  color: var(--text2);
+}
+
+#collab-copy-btn:hover {
+  background: var(--surface3);
+  color: var(--text);
+}
+
+#collab-user-list {
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+}
+
+#collab-leave-btn {
+  margin-top: 14px;
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--red);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--red);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+#collab-leave-btn:hover {
+  background: rgba(247, 111, 111, 0.1);
+}

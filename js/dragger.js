@@ -132,7 +132,11 @@ function applyDrag(clientX, clientY) {
     if (!edge) return;
     edge.cardOffX = drag.origX + dx;
     edge.cardOffY = drag.origY + dy;
-    render();
+    if (window.COLLAB && COLLAB.isInRoom()) {
+      COLLAB.emitMove(edge.id, 'cardinality', edge.cardOffX, edge.cardOffY);
+    } else {
+      render();
+    }
     return;
   }
 
@@ -156,15 +160,22 @@ function applyDrag(clientX, clientY) {
   // Drag de nó único
   const node = state.nodes.find(n => n.id === drag.nodeId);
   if (!node) return;
-  node.cx = drag.origCx + dx;
-  node.cy = drag.origCy + dy;
 
-  drag.children.forEach(c => {
-    const child = state.nodes.find(n => n.id === c.nodeId);
-    if (child) { child.cx = node.cx + c.offX; child.cy = node.cy + c.offY; }
-  });
+  const newCx = drag.origCx + dx;
+  const newCy = drag.origCy + dy;
 
-  render();
+  if (window.COLLAB && COLLAB.isInRoom()) {
+    COLLAB.emitMove(node.id, node.type, newCx, newCy);
+  } else {
+    node.cx = newCx;
+    node.cy = newCy;
+
+    drag.children.forEach(c => {
+      const child = state.nodes.find(n => n.id === c.nodeId);
+      if (child) { child.cx = node.cx + c.offX; child.cy = node.cy + c.offY; }
+    });
+    render();
+  }
 }
 
 function onDragEnd() {
@@ -174,6 +185,11 @@ function onDragEnd() {
     // removemos o snapshot que o startDrag criou preventivamente.
     if (!appState.dragMovedForClick) {
       popState();
+    }
+
+    if (window.COLLAB && COLLAB.isInRoom() && drag.nodeId) {
+      const node = state.nodes.find(n => n.id === drag.nodeId);
+      if (node) COLLAB.emitLockEnd(node.id, node.cx, node.cy);
     }
     drag = null;
   }
@@ -306,6 +322,14 @@ export function initViewportEvents() {
     }
   });
 
+  // Emite movimento do cursor (coordenadas do canvas)
+  vp.addEventListener('mousemove', e => {
+    if (window.COLLAB && COLLAB.isInRoom()) {
+      const pt = screenToSVG(e.clientX, e.clientY);
+      COLLAB.emitCursorMove(pt.x, pt.y);
+    }
+  });
+
   vp.addEventListener('touchstart', e => {
     if (e.touches.length !== 1) return;
     const t = e.touches[0];
@@ -335,6 +359,13 @@ function applyPan(cx, cy) {
   if (!pan) return;
   state.panX = pan.origX + cx - pan.startX;
   state.panY = pan.origY + cy - pan.startY;
+  
+  if (window.COLLAB && COLLAB.isInRoom()) {
+      COLLAB.refreshCursorPositions();
+  }
+  
+  if (window.RENDER_LOOP) RENDER_LOOP.markDirty();
+  else render();
   applyTransform();
 }
 

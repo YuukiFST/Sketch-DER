@@ -82,4 +82,15 @@ export function applyEdits() {
   closePanel();
   render();
   setStatus('ok', 'Alterações salvas no diagrama!');
+
+  // Emite para colaboração
+  if (window.COLLAB && COLLAB.isInRoom()) {
+    const changes = { name: n.name };
+    if (n.type === 'attribute') {
+        changes.typeStr = n.typeStr;
+        changes.pk = n.pk;
+    }
+    // No performance plan, podemos enviar como der_update para simplificar sincronismo total de labels
+    COLLAB.emitDerUpdate(window.SKETCH_DER.getFullState());
+  }
 }

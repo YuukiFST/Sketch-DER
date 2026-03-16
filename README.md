@@ -25,4 +25,3 @@ Depois que a lógica estiver batida e você tiver certeza do que precisa, aí si
 A forma mais fácil de usar é através do link oficial, assim você não precisa baixar nada:
 
 - **Acesse agora:** [https://yuukifst.github.io/Sketch-DER/](https://yuukifst.github.io/Sketch-DER/)
-
