@@ -25,3 +25,20 @@ Depois que a lógica estiver batida e você tiver certeza do que precisa, aí si
 A forma mais fácil de usar é através do link oficial, assim você não precisa baixar nada:
 
 - **Acesse agora:** [https://yuukifst.github.io/Sketch-DER/](https://yuukifst.github.io/Sketch-DER/)
+
+## 🤝 Trabalho em Equipe (Colaboração)
+
+Agora o Sketch-DER suporta colaboração em tempo real de alta performance. Você pode desenhar com seus colegas simultaneamente, com movimentos suaves a 60fps.
+
+### Como usar:
+
+1. Clique no botão **🤝 Colaborar** no menu superior.
+2. Digite seu nome e clique em **Criar Sala**.
+3. Copie o **código de 6 caracteres** (ex: `DER-4F2A`) e envie para seus amigos.
+4. Seus amigos devem abrir o link, digitar o nome deles, colar o código e clicar em **Entrar na Sala**.
+
+### O que acontece:
+
+- **Cursores Remotos:** Veja exatamente onde seus colegas estão com o mouse.
+- **Sistema de Locks:** Quando alguém começa a arrastar uma entidade ou relacionamento, ela fica travada (com a cor do usuário) para evitar que duas pessoas movam o mesmo item ao mesmo tempo.
+- **Sincronização Total:** Mudanças no script, nomes de atributos ou posições são refletidas instantaneamente para todos na sala.
