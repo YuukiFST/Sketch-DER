@@ -45,6 +45,14 @@ const COLLAB = (() => {
       if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
     };
 
+    ws.onerror = (e) => {
+      console.warn('[Collab] Erro de conexão:', e);
+      if (!roomCode) {
+        hideLoadingOverlay();
+        showToast('Não foi possível conectar ao servidor.', 'error');
+      }
+    };
+
     ws.onclose = () => {
       console.log('[Collab] Desconectado');
       if (roomCode) {
@@ -55,10 +63,12 @@ const COLLAB = (() => {
             payload: JSON.stringify({ roomCode, userName: myInfo?.name || 'Usuário' })
           });
         }, 3000);
+      } else {
+        hideLoadingOverlay();
+        // Se fechou sem roomCode, é erro de conexão inicial
+        showToast('Conexão encerrada pelo servidor.', 'error');
       }
     };
-
-    ws.onerror = (e) => console.warn('[Collab] Erro:', e);
 
     ws.onmessage = (event) => {
       try {

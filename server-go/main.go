@@ -337,15 +337,8 @@ func removeClient(c *Client) {
 
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
-		origin := r.Header.Get("Origin")
-		allowed := map[string]bool{
-			"https://yuukifst.github.io": true,
-			"http://localhost:3000":      true,
-			"http://127.0.0.1:5500":      true,
-			"http://localhost:5500":      true,
-			"http://localhost:8000":      true,
-		}
-		return allowed[origin]
+		// Permissivo para evitar bloqueios de Origin em diferentes ambientes/GHPages
+		return true
 	},
 }
 
