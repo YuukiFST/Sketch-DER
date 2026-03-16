@@ -39,7 +39,20 @@ const COLLAB = (() => {
 
     ws = new WebSocket(SERVER_URL);
 
+    // Timeout de conexão (útil para hibernação do Render)
+    const connTimeout = setTimeout(() => {
+      if (ws.readyState !== WebSocket.OPEN) {
+        console.warn('[Collab] Timeout de conexão');
+        ws.close();
+        if (!roomCode) {
+           hideLoadingOverlay();
+           showToast('O servidor demorou muito para responder (hibernação). Tente novamente.', 'error');
+        }
+      }
+    }, 60000);
+
     ws.onopen = () => {
+      clearTimeout(connTimeout);
       console.log('[Collab] Conectado');
       ws.send(JSON.stringify(firstMessage));
       if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
